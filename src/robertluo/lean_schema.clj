@@ -1,34 +1,6 @@
 (ns robertluo.lean-schema
   (:require
-   [datomic.api :as d]))
-
-(defn- parse-opt
-  [opt]
-  (condp #(%1 %2) opt
-    #{:string :boolean :long :bigint :float
-      :double :bigdec :ref :instant :uuid :uri :bytes}
-    [:db/valueType (keyword "db.type" (name opt))]
-    #{:one :many}
-    [:db/cardinality (keyword "db.cardinality" (name opt))]
-    #{:value :identity}
-    [:db/unique (keyword "db.unique" (name opt))]
-    #{:index :fulltext :isComponent :noHistory}
-    [(keyword "db" (name opt)) true]
-    :else (throw (ex-info "Invalid opt" {:opt opt}))))
-
-(comment
-  (parse-opt :index)
-  (parse-opt :long)
-  )
-
-(defn attr
-  [ident doc & opts]
-  (let [opts (->> opts (map parse-opt) (into {}))]
-    (merge
-     {:db/ident       ident
-      :db/doc         doc
-      :db/cardinality :db.cardinality/one}
-     opts)))
+   [robertluo.lean-schema.impl :as impl]))
 
 (defn mk-schema
   "使用简写数据定义 datomic 属性，返回它的标准格式。
@@ -47,7 +19,7 @@
    - `:idents` 定义枚举，枚举ident*
    - `:functions` 定义数据库函数 [函数ident 文档字符串 函数实现(用d/function)]"
   [{:keys [attrs idents functions]}]
-  (concat (mapv #(apply attr %) attrs)
+  (concat (mapv #(apply impl/attr %) attrs)
           (mapv #(hash-map :db/ident %) idents)
           (mapv (fn [[id doc f]] {:db/ident id :db/doc doc :db/fn f})
                 functions)))
