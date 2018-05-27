@@ -1,2 +1,3 @@
 # lean-schema
-a small library for compact schema of datomic
+
+A small library for compact schema of datomic.
